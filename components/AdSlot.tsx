@@ -7,7 +7,7 @@ export function AdSlot({ variant, className = "" }: { variant: "result" | "in-co
   const height = variant === "result" ? "h-24" : "h-64";
   return (
     <div
-      className={`w-full ${height} flex items-center justify-center rounded-lg border border-dashed border-gray-200 bg-gray-50 text-xs text-gray-400 ${className}`}
+      className={`w-full ${height} flex items-center justify-center rounded-lg border border-dashed border-gray-200 bg-gray-50 text-xs text-gray-600 ${className}`}
       data-ad-slot={variant}
       aria-hidden="true"
     >

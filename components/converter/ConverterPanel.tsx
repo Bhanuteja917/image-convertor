@@ -8,7 +8,7 @@ import {
   MOBILE_SAFARI_MAX_BATCH_FILES,
   type OutputFormat,
 } from "@/lib/convert";
-import { outputFileName } from "@/lib/filename";
+import { dedupeFileName, outputFileName } from "@/lib/filename";
 import { isProbablyMobileSafari } from "@/lib/mobile";
 import { ConvertWorkerPool, WorkerJobError } from "@/lib/worker/pool";
 import { BackgroundColorPicker } from "./BackgroundColorPicker";
@@ -153,9 +153,10 @@ export function ConverterPanel({ initialOutputFormat = "jpeg", lockOutputFormat 
     setIsZipping(true);
     try {
       const { createZip } = await import("@/lib/zip");
+      const usedNames = new Set<string>();
       const blob = await createZip(
         doneItems.map((item) => ({
-          name: outputFileName(item.file.name, outputFormat),
+          name: dedupeFileName(outputFileName(item.file.name, outputFormat), usedNames),
           blob: item.result!.blob,
         })),
       );

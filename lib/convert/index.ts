@@ -1,7 +1,14 @@
 import { canDecodeHeicNatively, canEncodeWebp } from "./capabilities";
 import { decodeToImageData, encodeFromImageData } from "./canvas-convert";
 import { detectFormat, mimeTypeFor } from "./detect";
-import { corruptFileError, memoryLimitError, missingCodecError, unsupportedFormatError } from "./errors";
+import {
+  ConvertError,
+  corruptFileError,
+  encodeFailedError,
+  memoryLimitError,
+  missingCodecError,
+  unsupportedFormatError,
+} from "./errors";
 import { extractExifSegment, injectExifSegment, readOrientation } from "./exif";
 import { decodeHeic } from "./heic-decode";
 import { MAX_INPUT_FILE_BYTES } from "./limits";
@@ -43,6 +50,10 @@ export async function convertImage(
     throw memoryLimitError(fileName);
   }
 
+  if (typeof OffscreenCanvas === "undefined") {
+    throw missingCodecError("in-browser image decoding (OffscreenCanvas)");
+  }
+
   if (options.outputFormat === "webp" && !canEncodeWebp()) {
     throw missingCodecError("WebP encoding");
   }
@@ -80,7 +91,13 @@ export async function convertImage(
     raw = flattenAlpha(raw, backgroundColor);
   }
 
-  let blob = await encodeFromImageData(raw, options.outputFormat, quality);
+  let blob: Blob;
+  try {
+    blob = await encodeFromImageData(raw, options.outputFormat, quality);
+  } catch (cause) {
+    if (cause instanceof ConvertError) throw cause;
+    throw encodeFailedError(cause);
+  }
 
   if (exifSegment) {
     const encodedBytes = new Uint8Array(await blob.arrayBuffer());
